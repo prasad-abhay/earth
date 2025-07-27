@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,39 +44,12 @@ import {
 
 export default function AdminPage() {
   const { user } = useAuth();
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isViewUserDialogOpen, setIsViewUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
-  // Sample users data
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      role: "user",
-      dateAdded: "2024-01-15",
-      addedBy: "Admin User",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      role: "admin",
-      dateAdded: "2024-01-16",
-      addedBy: "Admin User",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike.johnson@example.com",
-      role: "user",
-      dateAdded: "2024-01-17",
-      addedBy: "Jane Smith",
-    },
-  ]);
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -89,66 +63,88 @@ export default function AdminPage() {
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.role.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-  //  add user
-  const handleAddUser = () => {
+  
+  const handleAddUser = async () => {
     if (newUser.name && newUser.email) {
       const userToAdd = {
-        id: users.length + 1,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        dateAdded: new Date().toISOString().split("T")[0],
         addedBy: user.name,
+        dateAdded: new Date().toISOString().split("T")[0],
       };
-      setUsers([...users, userToAdd]);
-      setNewUser({ name: "", email: "", role: "user" });
-      setIsAddUserDialogOpen(false);
 
-      alert("User added successfully!");
+      try {
+        const res = await fetch("http://localhost:3000/api/user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userToAdd),
+        });
+
+        const savedUser = await res.json();
+        setUsers([...users, savedUser]);
+        setNewUser({ name: "", email: "", role: "user" });
+        setIsAddUserDialogOpen(false);
+        alert("User added successfully!");
+      } catch (err) {
+        console.error("Error adding user:", err);
+        alert("Error adding user");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  // edit user
-  const handleEditUser = () => {
+  const handleEditUser = async () => {
     if (selectedUser && newUser.name && newUser.email) {
       const confirmEdit = window.confirm(
-        "Are you sure you want to save changes to this user?",
+        "Are you sure you want to save changes?",
       );
-      if (!confirmEdit) return; // If user clicks "Cancel", stop editing
+      if (!confirmEdit) return;
 
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id
-            ? {
-                ...u,
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role,
-              }
-            : u,
-        ),
-      );
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/user/${selectedUser._id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newUser),
+          },
+        );
 
-      setNewUser({ name: "", email: "", role: "user" });
-      setSelectedUser(null);
-      setIsEditUserDialogOpen(false);
-
-      alert("User updated successfully!");
+        const updatedUser = await res.json();
+        setUsers(
+          users.map((u) => (u._id === updatedUser._id ? updatedUser : u)),
+        );
+        setNewUser({ name: "", email: "", role: "user" });
+        setSelectedUser(null);
+        setIsEditUserDialogOpen(false);
+        alert("User updated successfully!");
+      } catch (err) {
+        console.error("Error updating user:", err);
+        alert("Error updating user");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  // delete user
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this user?",
     );
     if (confirmed) {
-      setUsers(users.filter((u) => u.id !== userId));
+      try {
+        await fetch(`http://localhost:3000/api/user/${userId}`, {
+          method: "DELETE",
+        });
+        setUsers(users.filter((u) => u._id !== userId));
+      } catch (err) {
+        console.error("Error deleting user:", err);
+        alert("Error deleting user");
+      }
     }
+    alert("user deleted sucessfully!");
   };
 
   // open edit diglog function
@@ -167,6 +163,20 @@ export default function AdminPage() {
     setSelectedUser(userToView);
     setIsViewUserDialogOpen(true);
   };
+
+  // fetch user
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/user"); // adjust port if needed
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   // Check if current user is admin
   if (user?.role !== "admin") {
@@ -350,7 +360,7 @@ export default function AdminPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteUser(u.id)}
+                          onClick={() => handleDeleteUser(u._id)}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,6 @@ import {
   Globe,
   Plus,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   Eye,
@@ -42,43 +42,7 @@ export default function CountriesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const [countries, setCountries] = useState([
-    {
-      id: 1,
-      name: "United States",
-      code: "US",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Canada",
-      code: "CA",
-      addedBy: "John Doe",
-      dateAdded: "2024-01-16",
-    },
-    {
-      id: 3,
-      name: "United Kingdom",
-      code: "GB",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-17",
-    },
-    {
-      id: 4,
-      name: "France",
-      code: "FR",
-      addedBy: "Jane Smith",
-      dateAdded: "2024-01-18",
-    },
-    {
-      id: 5,
-      name: "Germany",
-      code: "DE",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-19",
-    },
-  ]);
+  const [countries, setCountries] = useState([]);
 
   const [newCountry, setNewCountry] = useState({
     name: "",
@@ -91,54 +55,114 @@ export default function CountriesPage() {
       country.code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleAddCountry = () => {
+  const handleAddCountry = async () => {
     if (newCountry.name && newCountry.code) {
-      const now = new Date();
-      const country = {
-        id: countries.length + 1,
-        name: newCountry.name,
-        code: newCountry.code.toUpperCase(),
-        addedBy: user.name,
-        dateAdded: now.toISOString().split("T")[0],
-      };
-      setCountries([...countries, country]);
-      setNewCountry({ name: "", code: "" });
-      setIsAddDialogOpen(false);
+      try {
+        const response = await fetch("http://localhost:3000/api/country", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newCountry.name,
+            code: newCountry.code.toUpperCase(),
+            addedBy: user._id,
+            dateAdded: new Date().toISOString().split("T")[0],
+          }),
+        });
 
-      alert("Country added successfully!");
+        if (!response.ok) throw new Error("Failed to add country");
+
+        const savedCountry = await response.json();
+
+        const formatted = {
+          id: savedCountry._id,
+          name: savedCountry.name,
+          code: savedCountry.code,
+          addedBy: user.name,
+          dateAdded: new Date(savedCountry.createdAt)
+            .toISOString()
+            .split("T")[0],
+        };
+
+        setCountries((prev) => [...prev, formatted]);
+        setNewCountry({ name: "", code: "" });
+        setIsAddDialogOpen(false);
+        alert("Country added successfully!");
+      } catch (error) {
+        console.error("Error adding country:", error);
+        alert("Error adding country.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  const handleEditCountry = () => {
+  const handleEditCountry = async () => {
     if (selectedCountry && newCountry.name && newCountry.code) {
-      setCountries(
-        countries.map((country) =>
-          country.id === selectedCountry.id
-            ? {
-                ...country,
-                name: newCountry.name,
-                code: newCountry.code.toUpperCase(),
-              }
-            : country,
-        ),
-      );
-      setNewCountry({ name: "", code: "" });
-      setSelectedCountry(null);
-      setIsEditDialogOpen(false);
-      alert("User updated successfully!");
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/country/${selectedCountry.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: newCountry.name,
+              code: newCountry.code.toUpperCase(),
+            }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to update country");
+
+        setCountries((prev) =>
+          prev.map((c) =>
+            c.id === selectedCountry.id
+              ? {
+                  ...c,
+                  name: newCountry.name,
+                  code: newCountry.code.toUpperCase(),
+                }
+              : c,
+          ),
+        );
+        setNewCountry({ name: "", code: "" });
+        setSelectedCountry(null);
+        setIsEditDialogOpen(false);
+        alert("Country updated successfully!");
+      } catch (error) {
+        console.error("Error updating country:", error);
+        alert("Error updating country.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  const handleDeleteCountry = (countryId) => {
+  const handleDeleteCountry = async (countryId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this Country?",
     );
-    if (confirmed) {
-      setCountries(countries.filter((country) => country.id !== countryId));
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/country/${countryId}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) throw new Error("Failed to delete country");
+
+      setCountries((prev) =>
+        prev.filter((country) => country.id !== countryId),
+      );
+    } catch (error) {
+      console.error("Error deleting country:", error);
+      alert("Error deleting country.");
     }
   };
 
@@ -152,6 +176,35 @@ export default function CountriesPage() {
     setSelectedCountry(country);
     setIsViewCountryDialogOpen(true);
   };
+
+  // fetch country
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/country");
+        const data = await response.json();
+
+        const formatted = (data.countries || data).map((country) => {
+          const date = country.createdAt ? new Date(country.createdAt) : null;
+
+          return {
+            id: country._id,
+            name: country.name,
+            code: country.code,
+            addedBy: country.addedBy?.name || "Admin",
+            dateAdded:
+              date && !isNaN(date) ? date.toISOString().split("T")[0] : "N/A",
+          };
+        });
+
+        setCountries(formatted);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+
+    fetchCountries();
+  }, []);
 
   // Check if current user is admin
   if (user?.role !== "admin") {
@@ -386,7 +439,7 @@ export default function CountriesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteCountry(country.id)}
+                          onClick={() => handleDeleteCountry(country._id)}
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
