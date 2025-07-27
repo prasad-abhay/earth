@@ -32,7 +32,6 @@ import {
   Building,
   Plus,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   Eye,
@@ -41,8 +40,6 @@ import {
   MapPin,
   Globe,
   Shield,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 

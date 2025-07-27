@@ -177,6 +177,9 @@ export default function Login() {
                 )}
               </Button>
             </form>
+            <div className="demo text-center">
+              <p>Demo: Enter any Email and Password to login</p> 
+            </div>
           </CardContent>
         </Card>
       </div>

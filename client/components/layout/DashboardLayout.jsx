@@ -72,7 +72,8 @@ export default function DashboardLayout({ children }) {
           {sidebarOpen && (
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Shield className="h-4 w-4 text-white" />
+                {/* <Shield className="h-4 w-4 text-white" /> */}
+                <img className="h-8 w-8 text-white" src="/icon.png" alt="Earth Icon" />
               </div>
               <span className="font-semibold text-gray-900">Earth </span>
             </div>

@@ -33,7 +33,6 @@ import {
   Shield,
   Plus,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   Eye,
