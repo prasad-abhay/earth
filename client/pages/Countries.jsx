@@ -183,17 +183,15 @@ export default function CountriesPage() {
       try {
         const response = await fetch("http://localhost:3000/api/country");
         const data = await response.json();
-
+        console.log(data);
         const formatted = (data.countries || data).map((country) => {
-          const date = country.createdAt ? new Date(country.createdAt) : null;
 
           return {
             id: country._id,
             name: country.name,
-            code: country.code,
-            addedBy: country.addedBy?.name || "Admin",
-            dateAdded:
-              date && !isNaN(date) ? date.toISOString().split("T")[0] : "N/A",
+            code: country.countryCode,
+            addedBy:country.createdBy,
+            dateAdded:country.createDate
           };
         });
 
@@ -439,7 +437,7 @@ export default function CountriesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteCountry(country._id)}
+                          onClick={() => handleDeleteCountry(country.id)}
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />

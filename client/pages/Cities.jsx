@@ -187,10 +187,6 @@ export default function CitiesPage() {
         countryName: selectedCountry.name,
         addedBy: user.name,
         dateAdded: now.toISOString().split("T")[0],
-        timeAdded: now.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
       };
       setCities([...cities, city]);
       setNewCity({ name: "", code: "", stateId: "", countryId: "" });
@@ -327,7 +323,6 @@ export default function CitiesPage() {
                     <TableHead>Country</TableHead>
                     <TableHead>Added By</TableHead>
                     <TableHead>Date Added</TableHead>
-                    <TableHead>Time Added</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -351,7 +346,6 @@ export default function CitiesPage() {
                       </TableCell>
                       <TableCell>{city.addedBy}</TableCell>
                       <TableCell>{city.dateAdded}</TableCell>
-                      <TableCell>{city.timeAdded}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -538,7 +532,6 @@ export default function CitiesPage() {
                   <TableHead>Country</TableHead>
                   <TableHead>Added By</TableHead>
                   <TableHead>Date Added</TableHead>
-                  <TableHead>Time Added</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -563,7 +556,6 @@ export default function CitiesPage() {
                     </TableCell>
                     <TableCell>{city.addedBy}</TableCell>
                     <TableCell>{city.dateAdded}</TableCell>
-                    <TableCell>{city.timeAdded}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center space-x-2">
                         <Button

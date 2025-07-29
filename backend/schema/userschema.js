@@ -1,5 +1,4 @@
 const { Schema, model } = require("mongoose");
-const { type } = require("os");
 
 // Country schema
 const countrySchema = new Schema(

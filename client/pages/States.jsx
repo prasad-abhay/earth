@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,26 +29,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   MapPin,
   Plus,
   Search,
-  MoreVertical,
+  Eye,
   Edit,
   Trash2,
-  Eye,
   Calendar,
   User,
   Globe,
-  Shield,
-  TrendingUp,
-  Users,
-  Building,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -68,58 +57,22 @@ export default function StatesPage() {
     { id: 5, name: "Germany", code: "DE" },
   ];
 
-  const [states, setStates] = useState([
-    {
-      id: 1,
-      name: "California",
-      code: "CA",
-      countryId: 1,
-      countryName: "United States",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-15",
-      timeAdded: "10:30 AM",
-    },
-    {
-      id: 2,
-      name: "Texas",
-      code: "TX",
-      countryId: 1,
-      countryName: "United States",
-      addedBy: "John Doe",
-      dateAdded: "2024-01-16",
-      timeAdded: "02:15 PM",
-    },
-    {
-      id: 3,
-      name: "Ontario",
-      code: "ON",
-      countryId: 2,
-      countryName: "Canada",
-      addedBy: "Jane Smith",
-      dateAdded: "2024-01-17",
-      timeAdded: "09:45 AM",
-    },
-    {
-      id: 4,
-      name: "Quebec",
-      code: "QC",
-      countryId: 2,
-      countryName: "Canada",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-18",
-      timeAdded: "11:20 AM",
-    },
-    {
-      id: 5,
-      name: "England",
-      code: "ENG",
-      countryId: 3,
-      countryName: "United Kingdom",
-      addedBy: "Sarah Wilson",
-      dateAdded: "2024-01-19",
-      timeAdded: "03:30 PM",
-    },
-  ]);
+  const [states, setStates] = useState([]);
+
+  // fetch
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/state");
+        const data = await res.json();
+        setStates(data);
+      } catch (err) {
+        console.error("Error fetching states:", err);
+      }
+    };
+
+    fetchStates();
+  }, []);
 
   const [newState, setNewState] = useState({
     name: "",
@@ -148,10 +101,6 @@ export default function StatesPage() {
         countryName: selectedCountry.name,
         addedBy: user.name,
         dateAdded: now.toISOString().split("T")[0],
-        timeAdded: now.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
       };
       setStates([...states, state]);
       setNewState({ name: "", code: "", countryId: "" });
@@ -162,28 +111,96 @@ export default function StatesPage() {
     }
   };
 
-  const handleEditState = () => {
+  // const handleEditState = async () => {
+  //   if (selectedState && newState.name && newState.code && newState.countryId) {
+  //     const selectedCountry = countries.find(
+  //       (c) => c.id === parseInt(newState.countryId),
+  //     );
+
+  //     const updatedState = {
+  //       ...selectedState,
+  //       name: newState.name,
+  //       code: newState.code.toUpperCase(),
+  //       countryName: selectedCountry.name,
+  //     };
+
+  //     try {
+  //       const res = await fetch(
+  //         `http://localhost:3000/api/state/${selectedState.id}`,
+  //         {
+  //           method: "PUT",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify(updatedState),
+  //         },
+  //       );
+
+  //       if (res.ok) {
+  //         setStates(
+  //           states.map((state) =>
+  //             state.id === selectedState.id ? updatedState : state,
+  //           ),
+  //         );
+  //         setNewState({ name: "", code: "", countryId: "" });
+  //         setSelectedState(null);
+  //         setIsEditDialogOpen(false);
+  //         alert("State updated successfully!");
+  //       } else {
+  //         const errorData = await res.json();
+  //         alert(`Failed to update state: ${errorData.message}`);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error updating state:", err);
+  //       alert("An error occurred while updating the state.");
+  //     }
+  //   } else {
+  //     alert("Please fill in all required fields.");
+  //   }
+  // };
+
+  const handleEditState = async () => {
     if (selectedState && newState.name && newState.code && newState.countryId) {
-      const selectedCountry = countries.find(
-        (c) => c.id === parseInt(newState.countryId),
-      );
-      setStates(
-        states.map((state) =>
-          state.id === selectedState.id
-            ? {
-                ...state,
-                name: newState.name,
-                code: newState.code.toUpperCase(),
-                countryId: parseInt(newState.countryId),
-                countryName: selectedCountry.name,
-              }
-            : state,
-        ),
-      );
-      setNewState({ name: "", code: "", countryId: "" });
-      setSelectedState(null);
-      setIsEditDialogOpen(false);
-      alert("State updated successfully!");
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/state/:${selectedState.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: newState.name,
+              code: newState.code.toUpperCase(),
+              countryId: parseInt(newState.countryId),
+            }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to update state");
+
+        // Update local state list
+        setStates((prev) =>
+          prev.map((s) =>
+            s.id === selectedState.id
+              ? {
+                  ...s,
+                  name: newState.name,
+                  code: newState.code.toUpperCase(),
+                  countryId: parseInt(newState.countryId),
+                }
+              : s,
+          ),
+        );
+
+        setNewState({ name: "", code: "", countryId: "" });
+        setSelectedState(null);
+        setIsEditDialogOpen(false);
+        alert("State updated successfully!");
+      } catch (error) {
+        console.error("Error updating state:", error);
+        alert("Error updating state.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
@@ -199,11 +216,11 @@ export default function StatesPage() {
   };
 
   const openEditDialog = (state) => {
+    console.log("Opening edit dialog for:", state); // Add this line
     setSelectedState(state);
     setNewState({
       name: state.name,
       code: state.code,
-      countryId: state.countryId.toString(),
     });
     setIsEditDialogOpen(true);
   };
@@ -273,7 +290,6 @@ export default function StatesPage() {
                     <TableHead>Country</TableHead>
                     <TableHead>Added By</TableHead>
                     <TableHead>Date Added</TableHead>
-                    <TableHead>Time Added</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -293,7 +309,6 @@ export default function StatesPage() {
                       </TableCell>
                       <TableCell>{state.addedBy}</TableCell>
                       <TableCell>{state.dateAdded}</TableCell>
-                      <TableCell>{state.timeAdded}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -381,12 +396,7 @@ export default function StatesPage() {
                           key={country.id}
                           value={country.id.toString()}
                         >
-                          <div className="flex items-center space-x-2">
-                            <Globe className="h-4 w-4" />
-                            <span>
-                              {country.name} ({country.code})
-                            </span>
-                          </div>
+                          {country.name} ({country.code})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -451,13 +461,12 @@ export default function StatesPage() {
                   <TableHead>Country</TableHead>
                   <TableHead>Added By</TableHead>
                   <TableHead>Date Added</TableHead>
-                  <TableHead>Time Added</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStates.map((state) => (
-                  <TableRow key={state.id}>
+                  <TableRow key={state._id}>
                     <TableCell className="font-medium">{state.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{state.code}</Badge>
@@ -470,7 +479,6 @@ export default function StatesPage() {
                     </TableCell>
                     <TableCell>{state.addedBy}</TableCell>
                     <TableCell>{state.dateAdded}</TableCell>
-                    <TableCell>{state.timeAdded}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center space-x-2">
                         <Button
@@ -515,7 +523,7 @@ export default function StatesPage() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent aria-describedby="edit-state-description">
             <DialogHeader>
               <DialogTitle>Edit State</DialogTitle>
             </DialogHeader>

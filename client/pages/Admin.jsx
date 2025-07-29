@@ -168,7 +168,7 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/user"); // adjust port if needed
+        const res = await fetch("http://localhost:3000/api/user");
         const data = await res.json();
         setUsers(data);
       } catch (err) {
@@ -329,7 +329,7 @@ export default function AdminPage() {
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((u) => (
-                  <TableRow key={u.id}>
+                  <TableRow key={u._id}>
                     <TableCell className="font-medium">{u.name}</TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>

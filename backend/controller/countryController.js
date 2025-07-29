@@ -6,7 +6,7 @@ const getCountries = async (req, res) => {
     const countries = await Country.find();
     res.status(200).json(countries);
   } catch (error) {
-    console.error("Error fetching countries:", error); // Log it properly
+    console.error("Error fetching countries:", error);
     res.status(500).json({
       message: "Error fetching countries",
       error: error.message || error.toString(),
@@ -28,9 +28,13 @@ const createCountry = async (req, res) => {
 // PUT update country by ID
 const updateCountry = async (req, res) => {
   try {
-    const updatedCountry = await Country.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updatedCountry = await Country.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      },
+    );
     res.status(200).json(updatedCountry);
   } catch (error) {
     res.status(400).json({ message: "Error updating country", error });
