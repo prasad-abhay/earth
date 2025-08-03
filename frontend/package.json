@@ -2,6 +2,8 @@
   "name": "fusion-starter",
   "private": true,
   "type": "module",
+  "homepage": "https://github.com/prasad-abhay/Earth-Data-Management",
+
   "pkg": {
     "assets": [
       "dist/spa/*"
