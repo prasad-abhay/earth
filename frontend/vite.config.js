@@ -25,7 +25,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig({
-  base: "/Earth-Data-Management/", // ✅ keep as is
+  base: "/Earth-Data-Management/",
   plugins: [react()],
   resolve: {
     alias: {
