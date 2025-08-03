@@ -48,31 +48,8 @@ export default function StatesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedState, setSelectedState] = useState(null);
-
-  const countries = [
-    { id: 1, name: "United States", code: "US" },
-    { id: 2, name: "Canada", code: "CA" },
-    { id: 3, name: "United Kingdom", code: "GB" },
-    { id: 4, name: "France", code: "FR" },
-    { id: 5, name: "Germany", code: "DE" },
-  ];
-
   const [states, setStates] = useState([]);
-
-  // fetch
-  useEffect(() => {
-    const fetchStates = async () => {
-      try {
-        const res = await fetch("http://localhost:3000/api/state");
-        const data = await res.json();
-        setStates(data);
-      } catch (err) {
-        console.error("Error fetching states:", err);
-      }
-    };
-
-    fetchStates();
-  }, []);
+  const [countries, setCountries] = useState([]);
 
   const [newState, setNewState] = useState({
     name: "",
@@ -87,83 +64,59 @@ export default function StatesPage() {
       state.countryName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleAddState = () => {
+  const handleAddState = async () => {
     if (newState.name && newState.code && newState.countryId) {
       const selectedCountry = countries.find(
-        (c) => c.id === parseInt(newState.countryId),
+        (c) => c.id?.toString() === newState.countryId?.toString(),
       );
-      const now = new Date();
-      const state = {
-        id: states.length + 1,
-        name: newState.name,
-        code: newState.code.toUpperCase(),
-        countryId: parseInt(newState.countryId),
-        countryName: selectedCountry.name,
-        addedBy: user.name,
-        dateAdded: now.toISOString().split("T")[0],
-      };
-      setStates([...states, state]);
-      setNewState({ name: "", code: "", countryId: "" });
-      setIsAddDialogOpen(false);
-      alert("User added successfully!");
+
+      try {
+        const stateToAdd = {
+          name: newState.name,
+          code: newState.code.toUpperCase(),
+          countryName: selectedCountry?.name,
+          countryId: newState.countryId,
+          createdBy: user.name,
+          createdDate: new Date().toISOString().split("T")[0],
+        };
+        console.log("stateToAdd:", stateToAdd);
+
+        const res = await fetch("http://localhost:3000/api/state", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(stateToAdd),
+        });
+
+        if (!res.ok) throw new Error("Failed to add state");
+
+        const savedState = await res.json();
+
+        console.log(savedState);
+
+        setStates([...states, savedState]);
+        setNewState({ name: "", code: "", countryId: "" });
+        setIsAddDialogOpen(false);
+        alert("State added successfully!");
+      } catch (error) {
+        console.error("Error adding state:", error);
+        alert("Error adding state.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  // const handleEditState = async () => {
-  //   if (selectedState && newState.name && newState.code && newState.countryId) {
-  //     const selectedCountry = countries.find(
-  //       (c) => c.id === parseInt(newState.countryId),
-  //     );
-
-  //     const updatedState = {
-  //       ...selectedState,
-  //       name: newState.name,
-  //       code: newState.code.toUpperCase(),
-  //       countryName: selectedCountry.name,
-  //     };
-
-  //     try {
-  //       const res = await fetch(
-  //         `http://localhost:3000/api/state/${selectedState.id}`,
-  //         {
-  //           method: "PUT",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify(updatedState),
-  //         },
-  //       );
-
-  //       if (res.ok) {
-  //         setStates(
-  //           states.map((state) =>
-  //             state.id === selectedState.id ? updatedState : state,
-  //           ),
-  //         );
-  //         setNewState({ name: "", code: "", countryId: "" });
-  //         setSelectedState(null);
-  //         setIsEditDialogOpen(false);
-  //         alert("State updated successfully!");
-  //       } else {
-  //         const errorData = await res.json();
-  //         alert(`Failed to update state: ${errorData.message}`);
-  //       }
-  //     } catch (err) {
-  //       console.error("Error updating state:", err);
-  //       alert("An error occurred while updating the state.");
-  //     }
-  //   } else {
-  //     alert("Please fill in all required fields.");
-  //   }
-  // };
-
   const handleEditState = async () => {
     if (selectedState && newState.name && newState.code && newState.countryId) {
+      const selectedCountry = countries.find(
+        (c) => c.id?.toString() === newState.countryId?.toString(),
+      );
+
       try {
         const response = await fetch(
-          `http://localhost:3000/api/state/:${selectedState.id}`,
+          `http://localhost:3000/api/state/${selectedState.id}`,
           {
             method: "PUT",
             headers: {
@@ -172,14 +125,14 @@ export default function StatesPage() {
             body: JSON.stringify({
               name: newState.name,
               code: newState.code.toUpperCase(),
-              countryId: parseInt(newState.countryId),
+              countryId: newState.countryId,
+              countryName: selectedCountry?.name,
             }),
           },
         );
 
         if (!response.ok) throw new Error("Failed to update state");
 
-        // Update local state list
         setStates((prev) =>
           prev.map((s) =>
             s.id === selectedState.id
@@ -187,7 +140,8 @@ export default function StatesPage() {
                   ...s,
                   name: newState.name,
                   code: newState.code.toUpperCase(),
-                  countryId: parseInt(newState.countryId),
+                  countryId: newState.countryId,
+                  countryName: selectedCountry?.name || "Unknown",
                 }
               : s,
           ),
@@ -206,21 +160,36 @@ export default function StatesPage() {
     }
   };
 
-  const handleDeleteState = (stateId) => {
+  const handleDeleteState = async (stateId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this State?",
     );
-    if (confirmed) {
-      setStates(states.filter((state) => state.id !== stateId));
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/state/${stateId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete state");
+
+      setStates((prevStates) =>
+        prevStates.filter((state) => state.id !== stateId),
+      );
+    } catch (error) {
+      console.error("Error deleting state:", error);
+      alert("error deleting state.");
     }
   };
 
   const openEditDialog = (state) => {
-    console.log("Opening edit dialog for:", state); // Add this line
+    console.log("Opening edit dialog for:", state);
     setSelectedState(state);
     setNewState({
       name: state.name,
       code: state.code,
+      countryId: state.countryId,
     });
     setIsEditDialogOpen(true);
   };
@@ -229,6 +198,51 @@ export default function StatesPage() {
     setSelectedState(state);
     setIsViewStateDialogOpen(true);
   };
+  // fetch states
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/state");
+        const data = await res.json();
+        console.log(data);
+        const formatted = (data.states || data).map((state) => {
+          return {
+            id: state._id,
+            name: state.name,
+            code: state.code,
+            countryName: state.countryName,
+            createdBy: state.createdBy,
+            createdDate: state.createdDate,
+          };
+        });
+        setStates(formatted);
+      } catch (err) {
+        console.error("Error fetching states:", err);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  // fetch country
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/country");
+        const data = await res.json();
+        const formattedCountries = (data.countries || data).map((country) => ({
+          id: country._id,
+          name: country.name,
+          code: country.code,
+        }));
+        setCountries(formattedCountries);
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      }
+    };
+
+    fetchCountries();
+  }, []);
 
   // Check if current user is admin
   if (user?.role !== "admin") {
@@ -307,8 +321,8 @@ export default function StatesPage() {
                           <span>{state.countryName}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{state.addedBy}</TableCell>
-                      <TableCell>{state.dateAdded}</TableCell>
+                      <TableCell>{state.createdBy}</TableCell>
+                      <TableCell>{state.createdDate}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -344,6 +358,7 @@ export default function StatesPage() {
             </div>
           </div>
 
+          {/* add state dialog */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-orange-600 hover:bg-orange-700">
@@ -375,7 +390,7 @@ export default function StatesPage() {
                     onChange={(e) =>
                       setNewState({ ...newState, code: e.target.value })
                     }
-                    placeholder="Enter state code (e.g., CA, TX)"
+                    placeholder="Enter state code "
                     maxLength={5}
                   />
                 </div>
@@ -456,6 +471,7 @@ export default function StatesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No</TableHead>
                   <TableHead>State Name</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Country</TableHead>
@@ -465,8 +481,9 @@ export default function StatesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStates.map((state) => (
-                  <TableRow key={state._id}>
+                {filteredStates.map((state, index) => (
+                  <TableRow key={state.id || state.name + state.code}>
+                    <TableCell className="font-medium">{index + 1}.</TableCell>
                     <TableCell className="font-medium">{state.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{state.code}</Badge>
@@ -477,8 +494,8 @@ export default function StatesPage() {
                         <span>{state.countryName}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{state.addedBy}</TableCell>
-                    <TableCell>{state.dateAdded}</TableCell>
+                    <TableCell>{state.createdBy}</TableCell>
+                    <TableCell>{state.createdDate}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center space-x-2">
                         <Button
@@ -515,7 +532,7 @@ export default function StatesPage() {
 
             {filteredStates.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No states found matching your search.
+                No states found .
               </div>
             )}
           </CardContent>
@@ -621,11 +638,11 @@ export default function StatesPage() {
                 </div>
                 <div>
                   <Label>Added By</Label>
-                  <p className="text-gray-800">{selectedState.addedBy}</p>
+                  <p className="text-gray-800">{selectedState.createdBy}</p>
                 </div>
                 <div>
                   <Label>Date Added</Label>
-                  <p className="text-gray-800">{selectedState.dateAdded}</p>
+                  <p className="text-gray-800">{selectedState.createdDate}</p>
                 </div>
                 <div className="flex justify-end">
                   <Button

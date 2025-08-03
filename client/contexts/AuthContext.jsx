@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Simple demo authentication - in real app, this would call your API
+    // Simple demo authentication 
     if (email && password) {
       const mockUser = {
         id: "1",

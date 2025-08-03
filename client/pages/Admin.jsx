@@ -71,7 +71,7 @@ export default function AdminPage() {
         email: newUser.email,
         role: newUser.role,
         addedBy: user.name,
-        dateAdded: new Date().toISOString().split("T")[0],
+        dateAdded: new Date().toISOString().split("T")[0],  
       };
 
       try {

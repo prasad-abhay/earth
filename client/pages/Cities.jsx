@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,103 +50,11 @@ export default function CitiesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
+  const [filteredStates, setFilteredStates] = useState([]);
 
-  const countries = [
-    { id: 1, name: "United States", code: "US" },
-    { id: 2, name: "Canada", code: "CA" },
-    { id: 3, name: "United Kingdom", code: "GB" },
-    { id: 4, name: "France", code: "FR" },
-    { id: 5, name: "Germany", code: "DE" },
-  ];
-
-  const states = [
-    {
-      id: 1,
-      name: "California",
-      code: "CA",
-      countryId: 1,
-      countryName: "United States",
-    },
-    {
-      id: 2,
-      name: "Texas",
-      code: "TX",
-      countryId: 1,
-      countryName: "United States",
-    },
-    { id: 3, name: "Ontario", code: "ON", countryId: 2, countryName: "Canada" },
-    { id: 4, name: "Quebec", code: "QC", countryId: 2, countryName: "Canada" },
-    {
-      id: 5,
-      name: "England",
-      code: "ENG",
-      countryId: 3,
-      countryName: "United Kingdom",
-    },
-  ];
-
-  const [cities, setCities] = useState([
-    {
-      id: 1,
-      name: "Los Angeles",
-      code: "LA",
-      stateId: 1,
-      stateName: "California",
-      countryId: 1,
-      countryName: "United States",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-15",
-      timeAdded: "10:30 AM",
-    },
-    {
-      id: 2,
-      name: "San Francisco",
-      code: "SF",
-      stateId: 1,
-      stateName: "California",
-      countryId: 1,
-      countryName: "United States",
-      addedBy: "John Doe",
-      dateAdded: "2024-01-16",
-      timeAdded: "02:15 PM",
-    },
-    {
-      id: 3,
-      name: "Houston",
-      code: "HOU",
-      stateId: 2,
-      stateName: "Texas",
-      countryId: 1,
-      countryName: "United States",
-      addedBy: "Jane Smith",
-      dateAdded: "2024-01-17",
-      timeAdded: "09:45 AM",
-    },
-    {
-      id: 4,
-      name: "Toronto",
-      code: "TOR",
-      stateId: 3,
-      stateName: "Ontario",
-      countryId: 2,
-      countryName: "Canada",
-      addedBy: "Admin User",
-      dateAdded: "2024-01-18",
-      timeAdded: "11:20 AM",
-    },
-    {
-      id: 5,
-      name: "Montreal",
-      code: "MTL",
-      stateId: 4,
-      stateName: "Quebec",
-      countryId: 2,
-      countryName: "Canada",
-      addedBy: "Sarah Wilson",
-      dateAdded: "2024-01-19",
-      timeAdded: "03:30 PM",
-    },
-  ]);
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
 
   const [newCity, setNewCity] = useState({
     name: "",
@@ -154,11 +62,6 @@ export default function CitiesPage() {
     stateId: "",
     countryId: "",
   });
-
-  // Get available states based on selected country
-  const availableStates = states.filter(
-    (state) => state.countryId === parseInt(newCity.countryId),
-  );
 
   const filteredCities = cities.filter(
     (city) =>
@@ -168,36 +71,57 @@ export default function CitiesPage() {
       city.countryName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const handleAddCity = () => {
+  const handleAddCity = async () => {
     if (newCity.name && newCity.code && newCity.stateId && newCity.countryId) {
       const selectedState = states.find(
-        (s) => s.id === parseInt(newCity.stateId),
+        (s) => s.id?.toString() === newCity.stateId?.toString(),
       );
       const selectedCountry = countries.find(
-        (c) => c.id === parseInt(newCity.countryId),
+        (c) => c.id?.toString() === newCity.countryId?.toString(),
       );
-      const now = new Date();
-      const city = {
-        id: cities.length + 1,
-        name: newCity.name,
-        code: newCity.code.toUpperCase(),
-        stateId: parseInt(newCity.stateId),
-        stateName: selectedState.name,
-        countryId: parseInt(newCity.countryId),
-        countryName: selectedCountry.name,
-        addedBy: user.name,
-        dateAdded: now.toISOString().split("T")[0],
-      };
-      setCities([...cities, city]);
-      setNewCity({ name: "", code: "", stateId: "", countryId: "" });
-      setIsAddDialogOpen(false);
-      alert("User added successfully!");
+
+      try {
+        const cityToAdd = {
+          name: newCity.name,
+          code: newCity.code.toUpperCase(),
+          stateName: selectedState?.name,
+          stateId: newCity.stateId,
+          countryName: selectedCountry?.name,
+          countryId: newCity.countryId,
+          createdBy: user.name,
+          createdDate: new Date().toISOString().split("T")[0],
+        };
+
+        console.log("cityToAdd:", cityToAdd);
+
+        const res = await fetch("http://localhost:3000/api/city", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(cityToAdd),
+        });
+
+        if (!res.ok) throw new Error("Failed to add city");
+
+        const savedCity = await res.json();
+
+        console.log(savedCity);
+
+        setCities([...cities, savedCity]);
+        setNewCity({ name: "", code: "", stateId: "", countryId: "" });
+        setIsAddDialogOpen(false);
+        alert("City added successfully!");
+      } catch (error) {
+        console.error("Error adding city:", error);
+        alert("Error adding city.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  const handleEditCity = () => {
+  const handleEditCity = async () => {
     if (
       selectedCity &&
       newCity.name &&
@@ -206,41 +130,84 @@ export default function CitiesPage() {
       newCity.countryId
     ) {
       const selectedState = states.find(
-        (s) => s.id === parseInt(newCity.stateId),
+        (s) => s.id?.toString() === newCity.stateId?.toString(),
       );
       const selectedCountry = countries.find(
-        (c) => c.id === parseInt(newCity.countryId),
+        (c) => c.id?.toString() === newCity.countryId?.toString(),
       );
-      setCities(
-        cities.map((city) =>
-          city.id === selectedCity.id
-            ? {
-                ...city,
-                name: newCity.name,
-                code: newCity.code.toUpperCase(),
-                stateId: parseInt(newCity.stateId),
-                stateName: selectedState.name,
-                countryId: parseInt(newCity.countryId),
-                countryName: selectedCountry.name,
-              }
-            : city,
-        ),
-      );
-      setNewCity({ name: "", code: "", stateId: "", countryId: "" });
-      setSelectedCity(null);
-      setIsEditDialogOpen(false);
-      alert("City updated successfully!");
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/city/${selectedCity.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: newCity.name,
+              code: newCity.code.toUpperCase(),
+              countryId: newCity.countryId,
+              countryName: selectedCountry?.name,
+              stateId: newCity.stateId,
+              stateName: selectedState?.name,
+            }),
+          },
+        );
+
+        if (!response.ok) throw new Error("Failed to update City");
+
+        const updatedCity = await response.json();
+
+        setCities((prev) =>
+          prev.map((city) =>
+            city.id === selectedCity.id
+              ? {
+                  ...city,
+                  name: newCity.name,
+                  code: newCity.code.toUpperCase(),
+                  stateId: newCity.stateId,
+                  stateName: selectedState?.name || "Unknown",
+                  countryId: newCity.countryId,
+                  countryName: selectedCountry?.name || "Unknown",
+                }
+              : city,
+          ),
+        );
+
+        setNewCity({ name: "", code: "", stateId: "", countryId: "" });
+        setSelectedCity(null);
+        setIsEditDialogOpen(false);
+        alert("City updated successfully!");
+      } catch (error) {
+        console.error("Error updating city:", error);
+        alert("Error updating city.");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
   };
 
-  const handleDeleteCity = (cityId) => {
+  const handleDeleteCity = async (cityId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this user?",
+      "Are you sure you want to delete this city?",
     );
-    if (confirmed) {
-      setCities(cities.filter((city) => city.id !== cityId));
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/city/${cityId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete city");
+
+      setCities((prevCities) =>
+        prevCities.filter((city) => city.id !== cityId),
+      );
+    } catch (error) {
+      console.error("Error deleting city:", error);
+      alert("Error deleting city.");
     }
   };
 
@@ -249,20 +216,108 @@ export default function CitiesPage() {
     setNewCity({
       name: city.name,
       code: city.code,
-      stateId: city.stateId.toString(),
-      countryId: city.countryId.toString(),
+      stateId: city.stateId,
+      countryId: city.countryId,
     });
     setIsEditDialogOpen(true);
-  };
-
-  const handleCountryChange = (countryId) => {
-    setNewCity({ ...newCity, countryId, stateId: "" });
   };
 
   const openViewCityDialog = (city) => {
     setSelectedCity(city);
     setIsViewCityDialogOpen(true);
   };
+
+  // fetch cities
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/city");
+        const data = await res.json();
+        console.log("fetch cities", data);
+        const formatted = (data.cities || data).map((city) => {
+          return {
+            id: city._id,
+            name: city.name,
+            code: city.code,
+            stateName: city.stateName,
+            countryName: city.countryName,
+            createdBy: city.createdBy,
+            createdDate: city.createdDate,
+          };
+        });
+        setCities(formatted);
+      } catch (err) {
+        console.error("Error fetching states:", err);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  // fetch states
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/state");
+        const data = await res.json();
+        console.log("fetch states", data);
+        const formatted = (data.states || data).map((state) => {
+          return {
+            id: state._id,
+            name: state.name,
+            code: state.code,
+            countryId: state.countryId,
+            countryName: state.countryName,
+            createdBy: state.createdBy,
+            createdDate: state.createdDate,
+          };
+        });
+        setStates(formatted);
+      } catch (err) {
+        console.error("Error fetching states:", err);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  // fetch country
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/country");
+        const data = await res.json();
+
+        console.log("fetch countries", data);
+        const formattedCountries = (data.countries || data).map((country) => ({
+          id: country._id,
+          name: country.name,
+          code: country.code,
+        }));
+        setCountries(formattedCountries);
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  // filter states
+  useEffect(() => {
+    if (newCity.countryId) {
+      const selectedCountry = countries.find((c) => c.id === newCity.countryId);
+
+      const filtered = states.filter(
+        (state) => state.countryName === selectedCountry?.name,
+      );
+
+      setFilteredStates(filtered);
+      setNewCity((prev) => ({ ...prev, stateId: "" }));
+    } else {
+      setFilteredStates([]);
+    }
+  }, [newCity.countryId, states]);
 
   // Check if current user is admin
   if (user?.role !== "admin") {
@@ -317,6 +372,7 @@ export default function CitiesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>#</TableHead>
                     <TableHead>City Name</TableHead>
                     <TableHead>Code</TableHead>
                     <TableHead>State</TableHead>
@@ -326,8 +382,9 @@ export default function CitiesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCities.map((city) => (
-                    <TableRow key={city.id}>
+                  {filteredCities.map((city, index) => (
+                    <TableRow key={city.id || city.name + city.code}>
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{city.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{city.code}</Badge>
@@ -344,8 +401,8 @@ export default function CitiesPage() {
                           <span>{city.countryName}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{city.addedBy}</TableCell>
-                      <TableCell>{city.dateAdded}</TableCell>
+                      <TableCell>{city.createdBy}</TableCell>
+                      <TableCell>{city.createdDate}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -380,6 +437,7 @@ export default function CitiesPage() {
             </div>
           </div>
 
+          {/* add city dialog */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -419,7 +477,9 @@ export default function CitiesPage() {
                   <Label htmlFor="country">Belongs to Country</Label>
                   <Select
                     value={newCity.countryId}
-                    onValueChange={handleCountryChange}
+                    onValueChange={(value) =>
+                      setNewCity({ ...newCity, countryId: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a country" />
@@ -454,7 +514,7 @@ export default function CitiesPage() {
                       <SelectValue placeholder="Select a state" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableStates.map((state) => (
+                      {filteredStates.map((state) => (
                         <SelectItem key={state.id} value={state.id.toString()}>
                           <div className="flex items-center space-x-2">
                             <MapPin className="h-4 w-4" />
@@ -526,6 +586,7 @@ export default function CitiesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No</TableHead>
                   <TableHead>City Name</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>State</TableHead>
@@ -536,8 +597,9 @@ export default function CitiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCities.map((city) => (
-                  <TableRow key={city.id}>
+                {filteredCities.map((city,index) => (
+                  <TableRow key={city.id || city.name + city.code}>
+                    <TableCell className="font-medium">{index + 1}.</TableCell>
                     <TableCell className="font-medium">{city.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{city.code}</Badge>
@@ -554,8 +616,8 @@ export default function CitiesPage() {
                         <span>{city.countryName}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{city.addedBy}</TableCell>
-                    <TableCell>{city.dateAdded}</TableCell>
+                    <TableCell>{city.createdBy}</TableCell>
+                    <TableCell>{city.createdDate}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center space-x-2">
                         <Button
@@ -566,7 +628,6 @@ export default function CitiesPage() {
                         >
                           <Eye className="h-4 w-4 text-blue-600" />
                         </Button>
-
                         <Button
                           variant="ghost"
                           size="sm"
@@ -592,7 +653,7 @@ export default function CitiesPage() {
 
             {filteredCities.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No cities found matching your search.
+                No cities found.
               </div>
             )}
           </CardContent>
@@ -632,7 +693,9 @@ export default function CitiesPage() {
                 <Label htmlFor="editCountry">Belongs to Country</Label>
                 <Select
                   value={newCity.countryId}
-                  onValueChange={handleCountryChange}
+                  onValueChange={(value) =>
+                    setNewCity({ ...newCity, countryId: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a country" />
@@ -667,7 +730,7 @@ export default function CitiesPage() {
                     <SelectValue placeholder="Select a state" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableStates.map((state) => (
+                    {filteredStates.map((state) => (
                       <SelectItem key={state.id} value={state.id.toString()}>
                         <div className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4" />
@@ -731,11 +794,11 @@ export default function CitiesPage() {
                 </div>
                 <div>
                   <Label>Added By</Label>
-                  <p className="text-gray-800">{selectedCity.addedBy}</p>
+                  <p className="text-gray-800">{selectedCity.createdBy}</p>
                 </div>
                 <div>
                   <Label>Date Added</Label>
-                  <p className="text-gray-800">{selectedCity.dateAdded}</p>
+                  <p className="text-gray-800">{selectedCity.createdDate}</p>
                 </div>
                 <div className="flex justify-end">
                   <Button
@@ -749,7 +812,6 @@ export default function CitiesPage() {
             )}
           </DialogContent>
         </Dialog>
-        
       </div>
     </DashboardLayout>
   );

@@ -58,17 +58,21 @@ export default function CountriesPage() {
   const handleAddCountry = async () => {
     if (newCountry.name && newCountry.code) {
       try {
+        const payload = {
+          name: newCountry.name,
+          code: newCountry.code.toUpperCase(),
+          createdBy: user.name, 
+          createdDate: new Date().toISOString().split("T")[0],
+        };
+
+        console.log("Sending:", payload);
+
         const response = await fetch("http://localhost:3000/api/country", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name: newCountry.name,
-            code: newCountry.code.toUpperCase(),
-            addedBy: user._id,
-            dateAdded: new Date().toISOString().split("T")[0],
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) throw new Error("Failed to add country");
@@ -76,14 +80,14 @@ export default function CountriesPage() {
         const savedCountry = await response.json();
 
         const formatted = {
-          id: savedCountry._id,
+          _id: savedCountry._id,
           name: savedCountry.name,
           code: savedCountry.code,
-          addedBy: user.name,
-          dateAdded: new Date(savedCountry.createdAt)
-            .toISOString()
-            .split("T")[0],
+          createdBy: savedCountry.createdBy,
+          createdDate: savedCountry.createDate,
         };
+
+        console.log(formatted);
 
         setCountries((prev) => [...prev, formatted]);
         setNewCountry({ name: "", code: "" });
@@ -125,7 +129,7 @@ export default function CountriesPage() {
                   name: newCountry.name,
                   code: newCountry.code.toUpperCase(),
                 }
-              : c,
+              : c
           ),
         );
         setNewCountry({ name: "", code: "" });
@@ -185,13 +189,12 @@ export default function CountriesPage() {
         const data = await response.json();
         console.log(data);
         const formatted = (data.countries || data).map((country) => {
-
           return {
             id: country._id,
             name: country.name,
-            code: country.countryCode,
-            addedBy:country.createdBy,
-            dateAdded:country.createDate
+            code: country.code,
+            addedBy: country.createdBy,
+            dateAdded: country.createdDate,
           };
         });
 
@@ -397,6 +400,7 @@ export default function CountriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                <TableHead>S.No</TableHead>
                   <TableHead>Country Name</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Added By</TableHead>
@@ -405,8 +409,9 @@ export default function CountriesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCountries.map((country) => (
+                {filteredCountries.map((country,index) => (
                   <TableRow key={country.id}>
+                    <TableCell className="font-medium">{index + 1}.</TableCell>
                     <TableCell className="font-medium">
                       {country.name}
                     </TableCell>
@@ -451,7 +456,7 @@ export default function CountriesPage() {
 
             {filteredCountries.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No countries found matching your search.
+                No countries found.
               </div>
             )}
           </CardContent>
@@ -543,6 +548,7 @@ export default function CountriesPage() {
             )}
           </DialogContent>
         </Dialog>
+
       </div>
     </DashboardLayout>
   );

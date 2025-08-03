@@ -2,8 +2,10 @@ const express = require("express")
 const connectDB = require("./connectdb");
 const apiRoutes = require("./routes/earthroutes");
 const cors = require("cors");
+const { configDotenv } = require("dotenv");
+configDotenv();
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Enable CORS
 app.use(cors());
@@ -19,7 +21,7 @@ app.get("/", (req, res) => {
 // using cors 
 app.use(
   cors({
-    origin: "http://localhost:8080",
+    origin: ["http://localhost:8080","https://github.com/prasad-abhay/Earth-Data-Management"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, 
   })

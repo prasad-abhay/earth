@@ -3,10 +3,10 @@ const { Schema, model } = require("mongoose");
 // Country schema
 const countrySchema = new Schema(
   {
-    name: String,
-    countryCode: String,
-    createdBy: String,
-    createDate: String,
+    name: { type: String, require: true },
+    code: { type: String, require: true },
+    createdBy: { type: String, require: true },
+    createdDate: { type: String, require: true },
   },
   { collection: "country" },
 );
@@ -14,10 +14,11 @@ const countrySchema = new Schema(
 // State schema
 const stateSchema = new Schema(
   {
-    name: String,
-    countryCode: String,
-    createdBy: String,
-    createDate: String,
+    name: { type: String, require: true },
+    code: { type: String, require: true },
+    countryName: { type: String, require: true },
+    createdBy: { type: String, require: true },
+    createdDate: { type: String, require: true },
   },
   { collection: "state" },
 );
@@ -25,21 +26,24 @@ const stateSchema = new Schema(
 // City schema
 const citySchema = new Schema(
   {
-    name: String,
-    countryCode: String,
-    createdBy: String,
-    createDate: String,
+    name: { type: String, require: true },
+    code: { type: String, require: true },
+    stateName: { type: String, require: true },
+    countryName: { type: String, require: true },
+    countryId: { type: String, require: true },
+    createdBy: { type: String, require: true },
+    createdDate: { type: String, require: true },
   },
   { collection: "city" },
 );
 // user schema
 const userSchema = new Schema(
   {
-    name: String,
-    email: String,
-    role: String,
-    addedBy: String,
-    dateAdded: String,
+    name: { type: String, require: true },
+    email: { type: String, require: true },
+    role: { type: String, require: true },
+    addedBy: { type: String, require: true },
+    dateAdded: { type: String, require: true },
   },
   { collection: "user" },
 );
