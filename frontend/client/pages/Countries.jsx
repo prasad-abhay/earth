@@ -43,6 +43,7 @@ export default function CountriesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [countries, setCountries] = useState([]);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const [newCountry, setNewCountry] = useState({
     name: "",
@@ -61,13 +62,11 @@ export default function CountriesPage() {
         const payload = {
           name: newCountry.name,
           code: newCountry.code.toUpperCase(),
-          createdBy: user.name, 
+          createdBy: user.name,
           createdDate: new Date().toISOString().split("T")[0],
         };
 
-        console.log("Sending:", payload);
-
-        const response = await fetch("http://localhost:3000/api/country", {
+        const response = await fetch(`${baseUrl}/api/country`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -87,8 +86,6 @@ export default function CountriesPage() {
           createdDate: savedCountry.createDate,
         };
 
-        console.log(formatted);
-
         setCountries((prev) => [...prev, formatted]);
         setNewCountry({ name: "", code: "" });
         setIsAddDialogOpen(false);
@@ -106,7 +103,7 @@ export default function CountriesPage() {
     if (selectedCountry && newCountry.name && newCountry.code) {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/country/${selectedCountry.id}`,
+          `${baseUrl}/api/country/${selectedCountry.id}`,
           {
             method: "PUT",
             headers: {
@@ -129,7 +126,7 @@ export default function CountriesPage() {
                   name: newCountry.name,
                   code: newCountry.code.toUpperCase(),
                 }
-              : c
+              : c,
           ),
         );
         setNewCountry({ name: "", code: "" });
@@ -153,7 +150,7 @@ export default function CountriesPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/country/${countryId}`,
+        `${baseUrl}/api/country/${countryId}`,
         {
           method: "DELETE",
         },
@@ -185,9 +182,8 @@ export default function CountriesPage() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/country");
+        const response = await fetch(`${baseUrl}/api/country`);
         const data = await response.json();
-        console.log(data);
         const formatted = (data.countries || data).map((country) => {
           return {
             id: country._id,
@@ -400,7 +396,7 @@ export default function CountriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                <TableHead>S.No</TableHead>
+                  <TableHead>S.No</TableHead>
                   <TableHead>Country Name</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Added By</TableHead>
@@ -409,7 +405,7 @@ export default function CountriesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCountries.map((country,index) => (
+                {filteredCountries.map((country, index) => (
                   <TableRow key={country.id}>
                     <TableCell className="font-medium">{index + 1}.</TableCell>
                     <TableCell className="font-medium">
@@ -548,7 +544,6 @@ export default function CountriesPage() {
             )}
           </DialogContent>
         </Dialog>
-
       </div>
     </DashboardLayout>
   );

@@ -51,6 +51,7 @@ export default function CitiesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
   const [filteredStates, setFilteredStates] = useState([]);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
@@ -92,9 +93,8 @@ export default function CitiesPage() {
           createdDate: new Date().toISOString().split("T")[0],
         };
 
-        console.log("cityToAdd:", cityToAdd);
 
-        const res = await fetch("http://localhost:3000/api/city", {
+        const res = await fetch(`${baseUrl}/api/city`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -105,8 +105,6 @@ export default function CitiesPage() {
         if (!res.ok) throw new Error("Failed to add city");
 
         const savedCity = await res.json();
-
-        console.log(savedCity);
 
         setCities([...cities, savedCity]);
         setNewCity({ name: "", code: "", stateId: "", countryId: "" });
@@ -138,7 +136,7 @@ export default function CitiesPage() {
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/city/${selectedCity.id}`,
+          `${baseUrl}/api/city/${selectedCity.id}`,
           {
             method: "PUT",
             headers: {
@@ -196,7 +194,7 @@ export default function CitiesPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/city/${cityId}`, {
+      const res = await fetch(`${baseUrl}/api/city/${cityId}`, {
         method: "DELETE",
       });
 
@@ -231,9 +229,8 @@ export default function CitiesPage() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/city");
+        const res = await fetch(`${baseUrl}/api/city`);
         const data = await res.json();
-        console.log("fetch cities", data);
         const formatted = (data.cities || data).map((city) => {
           return {
             id: city._id,
@@ -258,9 +255,8 @@ export default function CitiesPage() {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/state");
+        const res = await fetch(`${baseUrl}/api/state`);
         const data = await res.json();
-        console.log("fetch states", data);
         const formatted = (data.states || data).map((state) => {
           return {
             id: state._id,
@@ -285,10 +281,9 @@ export default function CitiesPage() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/country");
+        const res = await fetch(`${baseUrl}/api/country`);
         const data = await res.json();
 
-        console.log("fetch countries", data);
         const formattedCountries = (data.countries || data).map((country) => ({
           id: country._id,
           name: country.name,

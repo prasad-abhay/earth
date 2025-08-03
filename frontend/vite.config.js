@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     outDir: "dist/spa",
   },
-  // base: "/Earth-Data-Management/",
+  // base: "/http://localhost:3000/",
   plugins: [react()],
   resolve: {
     alias: {

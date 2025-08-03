@@ -42,6 +42,7 @@ import {
   Users,
 } from "lucide-react";
 
+
 export default function AdminPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -50,6 +51,7 @@ export default function AdminPage() {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isViewUserDialogOpen, setIsViewUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -63,7 +65,7 @@ export default function AdminPage() {
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.role.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-  
+
   const handleAddUser = async () => {
     if (newUser.name && newUser.email) {
       const userToAdd = {
@@ -71,11 +73,11 @@ export default function AdminPage() {
         email: newUser.email,
         role: newUser.role,
         addedBy: user.name,
-        dateAdded: new Date().toISOString().split("T")[0],  
+        dateAdded: new Date().toISOString().split("T")[0],
       };
 
       try {
-        const res = await fetch("http://localhost:3000/api/user", {
+        const res = await fetch(`${baseUrl}/api/user`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userToAdd),
@@ -103,14 +105,11 @@ export default function AdminPage() {
       if (!confirmEdit) return;
 
       try {
-        const res = await fetch(
-          `http://localhost:3000/api/user/${selectedUser._id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newUser),
-          },
-        );
+        const res = await fetch(`${baseUrl}/api/user/${selectedUser._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newUser),
+        });
 
         const updatedUser = await res.json();
         setUsers(
@@ -135,7 +134,7 @@ export default function AdminPage() {
     );
     if (confirmed) {
       try {
-        await fetch(`http://localhost:3000/api/user/${userId}`, {
+        await fetch(`${baseUrl}/api/user/${userId}`, {
           method: "DELETE",
         });
         setUsers(users.filter((u) => u._id !== userId));
@@ -168,7 +167,7 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/user");
+        const res = await fetch(`${baseUrl}/api/user`);
         const data = await res.json();
         setUsers(data);
       } catch (err) {
