@@ -1,4 +1,4 @@
-const express = require("express")
+const express = require("express");
 const connectDB = require("./connectdb");
 const apiRoutes = require("./routes/earthroutes");
 const cors = require("cors");
@@ -18,12 +18,16 @@ connectDB();
 app.get("/", (req, res) => {
   res.send(`hello world`);
 });
-// using cors 
+// using cors
 app.use(
   cors({
-    origin: ["http://localhost:8080","https://github.com/prasad-abhay/Earth-Data-Management","https://earth-coev.onrender.com"],
+    origin: [
+      "http://localhost:8080",
+      "https://github.com/prasad-abhay/Earth-Data-Management",
+      "https://vercel.com/abhay-prasads-projects-7e2e6327/earth",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, 
+    credentials: true,
   })
 );
 
