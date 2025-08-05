@@ -38,6 +38,7 @@ import {
   Calendar,
   User,
   Globe,
+  Shield,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
