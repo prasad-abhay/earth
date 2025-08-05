@@ -24,7 +24,7 @@ app.use(
     origin: [
       "http://localhost:8080",
       "https://github.com/prasad-abhay/Earth-Data-Management",
-      "https://vercel.com/abhay-prasads-projects-7e2e6327/earth",
+      "https://earth-5gd40z0ct-abhay-prasads-projects-7e2e6327.vercel.app/dashboard",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
