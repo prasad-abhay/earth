@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 // using cors 
 app.use(
   cors({
-    origin: ["http://localhost:8080","https://github.com/prasad-abhay/Earth-Data-Management"],
+    origin: ["http://localhost:8080","https://github.com/prasad-abhay/Earth-Data-Management","https://earth-coev.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, 
   })
