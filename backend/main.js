@@ -3,22 +3,12 @@ const connectDB = require("./connectdb");
 const apiRoutes = require("./routes/earthroutes");
 const cors = require("cors");
 const { configDotenv } = require("dotenv");
+
 configDotenv();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS
-app.use(cors());
-
-app.use(express.json());
-
-// Connect to DB
-connectDB();
-
-app.get("/", (req, res) => {
-  res.send(`hello world`);
-});
-// using cors
+// Enable CORS (with correct config)
 app.use(
   cors({
     origin: [
@@ -30,6 +20,15 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(express.json());
+
+// Connect to DB
+connectDB();
+
+app.get("/", (req, res) => {
+  res.send(`hello world`);
+});
 
 // Use API routes
 app.use("/api", apiRoutes);
