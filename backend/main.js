@@ -9,17 +9,24 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Enable CORS (with correct config)
+// app.use(
+//   cors({
+//     origin: [
+//       "http://localhost:8080",
+//       "https://earth-5gd40z0ct-abhay-prasads-projects-7e2e6327.vercel.app",
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:8080",
-      "https://github.com/prasad-abhay/Earth-Data-Management",
-      "https://earth-5gd40z0ct-abhay-prasads-projects-7e2e6327.vercel.app",
-    ],
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
   })
 );
+
 
 app.use(express.json());
 
