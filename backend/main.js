@@ -1,7 +1,7 @@
 const express = require("express");
 const connectDB = require("./connectdb");
 const apiRoutes = require("./routes/earthroutes");
-const cors = require("cors");
+// const cors = require("cors");
 const { configDotenv } = require("dotenv");
 
 configDotenv();
@@ -20,13 +20,7 @@ const PORT = process.env.PORT || 3000;
 //   })
 // );
 
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
-
+app.use(require("cors")());
 
 app.use(express.json());
 
